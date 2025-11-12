@@ -54,9 +54,18 @@ chatHeader.addEventListener('click', () => {
 sendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
 
-// 🔹 Fonction pour normaliser le texte (minuscules + enlever ponctuation/accents)
+// 🔹 Normalisation texte (minuscules, accents, ponctuation)
 function normalizeText(text) {
   return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.,!?]/g, '').trim();
+}
+
+// 🔹 Fonction pour matcher les mots-clés
+function matchesKeywords(msg, keywords) {
+  const words = normalizeText(msg).split(/\s+/);
+  return keywords.some(kw => {
+    const kwWords = normalizeText(kw).split(/\s+/);
+    return kwWords.every(k => words.includes(k));
+  });
 }
 
 function sendMessage(){
@@ -65,7 +74,7 @@ function sendMessage(){
 
   chatMessages.innerHTML += `<div class='chat-msg'><strong>Vous :</strong> ${msg}</div>`;
 
-  // 🔹 Charger tous les FAQ depuis la racine
+  // 🔹 Charger les FAQ depuis la racine
   database.ref('/').once('value').then(snapshot => {
     const data = snapshot.val();
     if(!data) return;
@@ -76,21 +85,18 @@ function sendMessage(){
       .reduce((obj, key) => { obj[key] = data[key]; return obj; }, {});
 
     let found = false;
-    const userMsg = normalizeText(msg);
 
     for(const key in faqs){
       const item = faqs[key];
       if(item.message && item.message.keywords && Array.isArray(item.message.keywords)){
-        const match = item.message.keywords.some(kw => userMsg.includes(normalizeText(kw)));
-        if(match){
+        if(matchesKeywords(msg, item.message.keywords)){
           chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.message.response}</div>`;
           found = true;
-          break; // on sort de la boucle dès qu'on trouve un mot-clé
+          break;
         }
       }
     }
 
-    // Si aucun mot-clé ne correspond, envoyer au admin
     if(!found){
       database.ref('messages').push({ text: msg, status: 'pending', timestamp: Date.now() });
       chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;

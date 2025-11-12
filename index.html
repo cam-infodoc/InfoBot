@@ -25,13 +25,13 @@
 <script>
   // ⚡ 1️⃣ Initialiser Firebase
   const firebaseConfig = {
-  apiKey: "AIzaSyBX57S6LD4OpIF3cV5seuFOS730zDQUFnM",
-  authDomain: "info-bot-b92ae.firebaseapp.com",
-  databaseURL: "https://info-bot-b92ae-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "info-bot-b92ae",
-  storageBucket: "info-bot-b92ae.firebasestorage.app",
-  messagingSenderId: "721853060361",
-  appId: "1:721853060361:web:996e7fa3d12ddcba10efd8"
+    apiKey: "AIzaSyBX57S6LD4OpIF3cV5seuFOS730zDQUFnM",
+    authDomain: "info-bot-b92ae.firebaseapp.com",
+    databaseURL: "https://info-bot-b92ae-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "info-bot-b92ae",
+    storageBucket: "info-bot-b92ae.firebasestorage.app",
+    messagingSenderId: "721853060361",
+    appId: "1:721853060361:web:996e7fa3d12ddcba10efd8"
   };
   firebase.initializeApp(firebaseConfig);
   const database = firebase.database();
@@ -49,14 +49,12 @@
   });
 
   // ⚡ 3️⃣ Envoyer un message
-  sendBtn.addEventListener("click", sendMessage);
-  chatInput.addEventListener("keypress", (e) => { if(e.key === 'Enter') sendMessage(); });
+  sendBtn.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
   function sendMessage(){
     const msg = chatInput.value.trim();
     if(!msg) return;
-
-    chatMessages.innerHTML += `<div><strong>Bot :</strong> ${String(item.response || "")}</div>`;
 
     // Récupérer toutes les FAQ
     database.ref('faq').once('value').then(snapshot => {
@@ -100,5 +98,4 @@
   });
 </script>
 
-</body>
-</html>
+</b

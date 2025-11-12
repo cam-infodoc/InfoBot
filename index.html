@@ -54,6 +54,11 @@ chatHeader.addEventListener('click', () => {
 sendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
 
+// 🔹 Fonction pour normaliser le texte (minuscules + enlever ponctuation)
+function normalizeText(text) {
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.,!?]/g, '').trim();
+}
+
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
@@ -63,14 +68,17 @@ function sendMessage(){
   database.ref('faq').once('value').then(snapshot => {
     const faqs = snapshot.val();
     let found = false;
+    const userMsg = normalizeText(msg);
 
     for(const key in faqs){
       const item = faqs[key];
-      if(item.message && item.message.keywords && Array.isArray(item.message.keywords) &&
-         item.message.keywords.some(kw => msg.toLowerCase().includes(kw.toLowerCase()))) {
-        chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.message.response}</div>`;
-        found = true;
-        break; // on sort de la boucle dès qu'on trouve un mot-clé
+      if(item.message && item.message.keywords && Array.isArray(item.message.keywords)){
+        const match = item.message.keywords.some(kw => userMsg.includes(normalizeText(kw)));
+        if(match){
+          chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.message.response}</div>`;
+          found = true;
+          break; // on sort de la boucle dès qu'on trouve un mot-clé
+        }
       }
     }
 

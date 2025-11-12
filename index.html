@@ -69,14 +69,12 @@ function sendMessage(){
       if(item.message && item.message.keywords && Array.isArray(item.message.keywords) &&
          item.message.keywords.some(kw => msg.toLowerCase().includes(kw.toLowerCase()))) {
         chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.message.response}</div>`;
-       found = true;
-       break;
-  }
-}
-
+        found = true;
+        break; // on sort de la boucle dès qu'on trouve un mot-clé
       }
     }
 
+    // Si aucun mot-clé ne correspond, envoyer au admin
     if(!found){
       database.ref('messages').push({ text: msg, status: 'pending', timestamp: Date.now() });
       chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
@@ -88,6 +86,7 @@ function sendMessage(){
   chatInput.value='';
 }
 
+// 🔹 Écouter les réponses admin en temps réel
 database.ref('adminResponses').on('child_added', snapshot => {
   const item = snapshot.val();
   if(item && item.userId){
@@ -98,4 +97,3 @@ database.ref('adminResponses').on('child_added', snapshot => {
 </script>
 </body>
 </html>
-

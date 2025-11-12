@@ -66,10 +66,14 @@ function sendMessage(){
 
     for(const key in faqs){
       const item = faqs[key];
-      if(item.keywords && Array.isArray(item.keywords) && item.keywords.some(kw => msg.toLowerCase().includes(kw.toLowerCase()))){
-        chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.response}</div>`;
-        found = true;
-        break;
+      if(item.message && item.message.keywords && Array.isArray(item.message.keywords) &&
+         item.message.keywords.some(kw => msg.toLowerCase().includes(kw.toLowerCase()))) {
+        chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.message.response}</div>`;
+       found = true;
+       break;
+  }
+}
+
       }
     }
 
@@ -94,3 +98,4 @@ database.ref('adminResponses').on('child_added', snapshot => {
 </script>
 </body>
 </html>
+

@@ -54,7 +54,7 @@ chatHeader.addEventListener('click', () => {
 sendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
 
-// 🔹 Fonction pour normaliser le texte (minuscules + enlever ponctuation)
+// 🔹 Fonction pour normaliser le texte (minuscules + enlever ponctuation/accents)
 function normalizeText(text) {
   return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.,!?]/g, '').trim();
 }
@@ -65,8 +65,16 @@ function sendMessage(){
 
   chatMessages.innerHTML += `<div class='chat-msg'><strong>Vous :</strong> ${msg}</div>`;
 
-  database.ref('faq').once('value').then(snapshot => {
-    const faqs = snapshot.val();
+  // 🔹 Charger tous les FAQ depuis la racine
+  database.ref('/').once('value').then(snapshot => {
+    const data = snapshot.val();
+    if(!data) return;
+
+    // Ne garder que les nœuds faq1, faq2, ...
+    const faqs = Object.keys(data)
+      .filter(key => key.startsWith('faq'))
+      .reduce((obj, key) => { obj[key] = data[key]; return obj; }, {});
+
     let found = false;
     const userMsg = normalizeText(msg);
 

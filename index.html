@@ -25,7 +25,6 @@
   </div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 <script>
@@ -42,19 +41,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// 🔹 DOM Elements
 const chatHeader = document.getElementById('chat-header');
 const chatBody = document.getElementById('chat-body');
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 
-// Toggle chat open/close
 chatHeader.addEventListener('click', () => {
   chatBody.style.display = chatBody.style.display === 'none' ? 'block' : 'none';
 });
 
-// Envoyer message
 sendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
 
@@ -62,17 +58,15 @@ function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
 
-  // Afficher message utilisateur
   chatMessages.innerHTML += `<div class='chat-msg'><strong>Vous :</strong> ${msg}</div>`;
 
-  // 🔹 Récupérer FAQ depuis Firebase
   database.ref('faq').once('value').then(snapshot => {
     const faqs = snapshot.val();
     let found = false;
 
     for(const key in faqs){
       const item = faqs[key];
-      if(item.keywords && item.keywords.some(kw => msg.toLowerCase().includes(kw.toLowerCase()))){
+      if(item.keywords && Array.isArray(item.keywords) && item.keywords.some(kw => msg.toLowerCase().includes(kw.toLowerCase()))){
         chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.response}</div>`;
         found = true;
         break;
@@ -80,7 +74,6 @@ function sendMessage(){
     }
 
     if(!found){
-      // Stocker message pour admin
       database.ref('messages').push({ text: msg, status: 'pending', timestamp: Date.now() });
       chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
     }
@@ -91,7 +84,6 @@ function sendMessage(){
   chatInput.value='';
 }
 
-// Écouter réponses admin
 database.ref('adminResponses').on('child_added', snapshot => {
   const item = snapshot.val();
   if(item && item.userId){
@@ -100,6 +92,5 @@ database.ref('adminResponses').on('child_added', snapshot => {
   }
 });
 </script>
-
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Chatbot Glass</title>
+<title>Chatbot Glass Firebase</title>
 <style>
   :root {
     --glass-bg: rgba(0, 0, 0, 0.5);
@@ -17,7 +17,6 @@
     font-family: 'Segoe UI', sans-serif;
   }
 
-  /* 🔵 Bulle flottante */
   #chat-bubble {
     position: fixed;
     bottom: 25px;
@@ -43,7 +42,6 @@
     background: rgba(0, 191, 255, 0.15);
   }
 
-  /* 🪟 Fenêtre de chat */
   #chat-window {
     position: fixed;
     bottom: 100px;
@@ -102,17 +100,10 @@
     background: #008ecc;
   }
 
-  .msg {
-    margin-bottom: 8px;
-  }
-  .msg strong {
-    color: var(--accent);
-  }
+  .msg { margin-bottom: 8px; }
+  .msg strong { color: var(--accent); }
 
-  /* Scrollbar discrète */
-  #chat-messages::-webkit-scrollbar {
-    width: 6px;
-  }
+  #chat-messages::-webkit-scrollbar { width: 6px; }
   #chat-messages::-webkit-scrollbar-thumb {
     background: var(--accent);
     border-radius: 10px;
@@ -132,21 +123,32 @@
   </div>
 </div>
 
+<!-- 🔹 Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
 <script>
-// 🔹 Basculer la fenêtre
+// 🔹 Configuration Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBX57S6LD4OpIF3cV5seuFOS730zDQUFnM",
+  authDomain: "info-bot-b92ae.firebaseapp.com",
+  databaseURL: "https://info-bot-b92ae-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "info-bot-b92ae",
+  storageBucket: "info-bot-b92ae.firebasestorage.app",
+  messagingSenderId: "721853060361",
+  appId: "1:721853060361:web:996e7fa3d12ddcba10efd8"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 🔹 Gestion affichage bulle/chat
 const chatBubble = document.getElementById('chat-bubble');
 const chatWindow = document.getElementById('chat-window');
-
 chatBubble.addEventListener('click', () => {
   chatWindow.style.display = chatWindow.style.display === 'none' || chatWindow.style.display === '' ? 'flex' : 'none';
 });
 
-// 🔹 FAQ simple
-const faqs = [
-  { keywords: ["délai", "intervention"], response: "Les délais sont de 24h maximum." },
-  { keywords: ["paiement", "paypal", "virement"], response: "Nous acceptons PayPal et les virements bancaires." }
-];
-
+// 🔹 Normalisation du texte
 function normalizeText(text) {
   return text.toLowerCase().normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -162,7 +164,8 @@ function matchesKeywords(msg, keywords) {
   });
 }
 
-function sendMessage() {
+// 🔹 Envoi message + recherche dans Firebase
+async function sendMessage() {
   const input = document.getElementById('chat-input');
   const chatMessages = document.getElementById('chat-messages');
   const msg = input.value.trim();
@@ -170,17 +173,36 @@ function sendMessage() {
 
   chatMessages.innerHTML += `<div class="msg"><strong>Vous :</strong> ${msg}</div>`;
 
-  let found = false;
-  for(const faq of faqs){
-    if(matchesKeywords(msg, faq.keywords)){
-      chatMessages.innerHTML += `<div class="msg"><strong>Bot :</strong> ${faq.response}</div>`;
-      found = true;
-      break;
-    }
-  }
+  try {
+    const snapshot = await db.ref('faq').once('value');
+    const faqs = snapshot.val();
+    let found = false;
 
-  if(!found){
-    chatMessages.innerHTML += `<div class="msg"><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
+    if (faqs) {
+      for (const key in faqs) {
+        const item = faqs[key];
+        if (item.message && item.message.keywords && Array.isArray(item.message.keywords)) {
+          if (matchesKeywords(msg, item.message.keywords)) {
+            chatMessages.innerHTML += `<div class="msg"><strong>Bot :</strong> ${item.message.response}</div>`;
+            found = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!found) {
+      await db.ref('messages').push({
+        text: msg,
+        status: 'pending',
+        timestamp: Date.now()
+      });
+      chatMessages.innerHTML += `<div class="msg"><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
+    }
+
+  } catch (error) {
+    chatMessages.innerHTML += `<div class="msg"><strong>Bot :</strong> Erreur de connexion à la base.</div>`;
+    console.error(error);
   }
 
   input.value = '';

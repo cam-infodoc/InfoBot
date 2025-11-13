@@ -23,7 +23,6 @@
     height: 70px;
     background: rgba(30,30,30,0.7);
     backdrop-filter: blur(10px);
-    border: none;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -100,7 +99,7 @@
 <div id="chatbot">
   <div id="chat-bubble">💬</div>
   <div id="chat-window">
-    <div id="chat-header">🤖 Info-Bot</div>
+    <div id="chat-header">🤖|Info-Bot</div>
     <div id="chat-messages"></div>
     <div id="chat-input-area">
       <input id="chat-input" type="text" placeholder="Écrivez votre message...">
@@ -112,7 +111,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 <script>
-// ✅ Configuration Firebase
+// 🔹 Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBX57S6LD4OpIF3cV5seuFOS730zDQUFnM",
   authDomain: "info-bot-b92ae.firebaseapp.com",
@@ -125,42 +124,48 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🎨 Sélecteurs
+// 🔹 Sélecteurs
 const bubble = document.getElementById('chat-bubble');
 const windowBox = document.getElementById('chat-window');
 const messages = document.getElementById('chat-messages');
 const input = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 
-// 🎭 Ouverture / fermeture
+// 🔹 Identification utilisateur
+let userId = localStorage.getItem('chatUserId');
+if (!userId) {
+  userId = 'user_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  localStorage.setItem('chatUserId', userId);
+}
+
+// 🔹 Ouverture / fermeture chat
 bubble.addEventListener('click', () => {
   windowBox.style.display = windowBox.style.display === 'none' ? 'block' : 'none';
 });
 
-// 🧾 Fonction d’affichage
+// 🔹 Fonctions
 function appendMsg(sender, text) {
   messages.innerHTML += `<div class="msg"><strong>${sender} :</strong> ${text}</div>`;
   messages.scrollTop = messages.scrollHeight;
 }
 
-// 🧠 Fonction de détection de mots-clés
 function matchesKeywords(msg, keywords) {
   const lower = msg.toLowerCase();
   return keywords.some(kw => lower.includes(kw.toLowerCase()));
 }
 
-// 🚀 Envoi du message
+// 🔹 Envoi message utilisateur
 sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
 
 function sendMessage() {
   const msg = input.value.trim();
-  if (!msg) return;
+  if(!msg) return;
 
   appendMsg('Vous', msg);
   input.value = '';
 
-  // 🔍 Lecture directe depuis la racine (faq1, faq2, ...)
+  // 🔍 Vérification des FAQ
   db.ref('/').once('value').then(snapshot => {
     const data = snapshot.val();
     let found = false;
@@ -183,8 +188,15 @@ function sendMessage() {
     }
   });
 }
+
+// 🔹 Écoute réponses admins en temps réel
+db.ref('adminResponses').on('child_added', snapshot => {
+  const item = snapshot.val();
+  if(item && item.userId === userId){
+    appendMsg('Admin', item.text);
+  }
+});
 </script>
+
 </body>
 </html>
-
-

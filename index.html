@@ -99,7 +99,7 @@
 <div id="chatbot">
   <div id="chat-bubble">💬</div>
   <div id="chat-window">
-    <div id="chat-header">Assistant InfoDoc</div>
+    <div id="chat-header">🤖 | Info-Bot</div>
     <div id="chat-messages"></div>
     <div id="chat-input-area">
       <input id="chat-input" type="text" placeholder="Écrivez votre message...">
@@ -189,7 +189,7 @@ function sendMessage() {
         status: 'pending',
         timestamp: Date.now()
       });
-      appendMsg('Bot', 'Votre question a été transmise à un administrateur.');
+      appendMsg('Bot', 'Info-Bot ne peut pas vous aider, mais pas de panique, votre question a été transmise à un administrateur qui vous répondra sur ce chat.');
     }
   });
 }
@@ -205,3 +205,4 @@ db.ref('adminResponses').on('child_added', snapshot => {
 
 </body>
 </html>
+

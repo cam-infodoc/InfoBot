@@ -2,17 +2,20 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Admin Chat Panel</title>
+<title>Admin Chat Panel Avancé</title>
 <style>
   body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
+  h2,h3 { margin-top: 0; }
   textarea, input { width: 100%; margin-bottom: 10px; padding: 8px; font-size: 14px; }
   button { padding: 8px 12px; font-size: 14px; cursor: pointer; }
   .msg { border-bottom: 1px solid #444; padding: 8px; cursor: pointer; }
   .msg:hover { background: rgba(0,150,255,0.1); }
+  .pending { color: #00aaff; }
+  .answered { color: #0f0; }
 </style>
 </head>
 <body>
-<h2>Admin Chat Panel</h2>
+<h2>Admin Chat Panel Avancé</h2>
 <div id="messages"></div>
 <h3>Répondre</h3>
 <input id="userId" placeholder="UserId de l'utilisateur">
@@ -39,30 +42,44 @@ const userIdInput = document.getElementById('userId');
 const responseText = document.getElementById('responseText');
 const sendBtn = document.getElementById('sendBtn');
 
-// 🔹 Affichage messages
-db.ref('messages').on('child_added', snapshot => {
-  const msg = snapshot.val();
-  const id = snapshot.key;
+// 🔹 Fonction pour afficher les messages
+function displayMessage(msg, key) {
   const div = document.createElement('div');
-  div.className = 'msg';
+  div.className = 'msg ' + msg.status;
   div.innerHTML = `<strong>${msg.userId}</strong>: ${msg.text} (status: ${msg.status})`;
   div.addEventListener('click', () => {
-    // remplit automatiquement le UserId pour répondre
     userIdInput.value = msg.userId;
   });
-  messagesDiv.prepend(div); // les plus récents en haut
+  messagesDiv.prepend(div);
+}
+
+// 🔹 Écoute messages utilisateurs (pending uniquement)
+db.ref('messages').on('child_added', snapshot => {
+  const msg = snapshot.val();
+  const key = snapshot.key;
+  if(msg.status === 'pending') {
+    displayMessage(msg, key);
+  }
 });
 
-// 🔹 Envoyer réponse
+// 🔹 Envoyer réponse et changer statut
 sendBtn.addEventListener('click', () => {
   const uid = userIdInput.value.trim();
   const text = responseText.value.trim();
   if(!uid || !text) return alert("UserId et réponse requis");
 
+  // Ajouter la réponse admin
   db.ref('adminResponses').push({
     userId: uid,
     text: text,
     timestamp: Date.now()
+  });
+
+  // Mettre à jour le ou les messages correspondants en "answered"
+  db.ref('messages').orderByChild('userId').equalTo(uid).once('value').then(snapshot => {
+    snapshot.forEach(child => {
+      child.ref.update({status: 'answered'});
+    });
   });
 
   responseText.value = '';

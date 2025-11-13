@@ -2,16 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Chatbot FAQ InfoDoc</title>
+<title>Chatbot Simple</title>
 <style>
-  #chatbot { position: fixed; bottom: 20px; right: 20px; width: 300px; font-family: Arial,sans-serif; z-index: 999; }
-  #chat-header { background: #007bff; color: white; padding: 10px; border-radius: 10px 10px 0 0; cursor: pointer; }
-  #chat-body { display: none; background: #fff; border: 1px solid #007bff; border-radius: 0 0 10px 10px; max-height: 400px; overflow-y: auto; padding: 10px; }
+  #chatbot { position: fixed; bottom: 20px; right: 20px; width: 300px; font-family: Arial,sans-serif; }
+  #chat-header { background: #007bff; color: white; padding: 10px; cursor: pointer; }
+  #chat-body { display: none; border: 1px solid #007bff; padding: 10px; background: #fff; }
   #chat-messages { height: 200px; overflow-y: auto; margin-bottom: 10px; }
   #chat-input { width: 70%; padding: 5px; }
-  #send-btn { padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-  .chat-msg { margin-bottom: 8px; }
-  .chat-msg strong { display: block; }
+  #send-btn { padding: 5px 10px; }
 </style>
 </head>
 <body>
@@ -25,97 +23,63 @@
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 <script>
-// 🔹 Initialiser Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBX57S6LD4OpIF3cV5seuFOS730zDQUFnM",
-  authDomain: "info-bot-b92ae.firebaseapp.com",
-  databaseURL: "https://info-bot-b92ae-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "info-bot-b92ae",
-  storageBucket: "info-bot-b92ae.firebasestorage.app",
-  messagingSenderId: "721853060361",
-  appId: "1:721853060361:web:996e7fa3d12ddcba10efd8"
-};
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
+// Basculer l'affichage du chat
 const chatHeader = document.getElementById('chat-header');
 const chatBody = document.getElementById('chat-body');
-const chatMessages = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const sendBtn = document.getElementById('send-btn');
-
 chatHeader.addEventListener('click', () => {
   chatBody.style.display = chatBody.style.display === 'none' ? 'block' : 'none';
 });
 
-sendBtn.addEventListener('click', sendMessage);
-chatInput.addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
+// Quelques FAQ simples
+const faqs = [
+  { keywords: ["délai", "intervention"], response: "Les délais sont de 24h maximum." },
+  { keywords: ["paiement", "virement", "paypal"], response: "Nous acceptons PayPal et virement." }
+];
 
-// 🔹 Normalisation texte (minuscules, accents, ponctuation)
+// Normalisation simple
 function normalizeText(text) {
-  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.,!?]/g, '').trim();
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.,!?']/g,'').trim();
 }
 
-// 🔹 Fonction pour matcher les mots-clés
+// Vérifier si un message correspond aux mots-clés
 function matchesKeywords(msg, keywords) {
-  const words = normalizeText(msg).split(/\s+/);
+  const userMsg = normalizeText(msg);
   return keywords.some(kw => {
-    const kwWords = normalizeText(kw).split(/\s+/);
-    return kwWords.every(k => words.includes(k));
+    const kwNorm = normalizeText(kw);
+    return kwNorm.split(/\s+/).every(word => userMsg.includes(word));
   });
 }
 
-function sendMessage(){
-  const msg = chatInput.value.trim();
+// Envoyer un message
+function sendMessage() {
+  const chatMessages = document.getElementById('chat-messages');
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
   if(!msg) return;
 
-  chatMessages.innerHTML += `<div class='chat-msg'><strong>Vous :</strong> ${msg}</div>`;
+  chatMessages.innerHTML += `<div><strong>Vous :</strong> ${msg}</div>`;
 
-  // 🔹 Charger les FAQ depuis la racine
-  database.ref('/').once('value').then(snapshot => {
-    const data = snapshot.val();
-    if(!data) return;
-
-    // Ne garder que les nœuds faq1, faq2, ...
-    const faqs = Object.keys(data)
-      .filter(key => key.startsWith('faq'))
-      .reduce((obj, key) => { obj[key] = data[key]; return obj; }, {});
-
-    let found = false;
-
-    for(const key in faqs){
-      const item = faqs[key];
-      if(item.message && item.message.keywords && Array.isArray(item.message.keywords)){
-        if(matchesKeywords(msg, item.message.keywords)){
-          chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> ${item.message.response}</div>`;
-          found = true;
-          break;
-        }
-      }
+  let found = false;
+  for(const faq of faqs){
+    if(matchesKeywords(msg, faq.keywords)){
+      chatMessages.innerHTML += `<div><strong>Bot :</strong> ${faq.response}</div>`;
+      found = true;
+      break;
     }
+  }
 
-    if(!found){
-      database.ref('messages').push({ text: msg, status: 'pending', timestamp: Date.now() });
-      chatMessages.innerHTML += `<div class='chat-msg'><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
-    }
+  if(!found){
+    chatMessages.innerHTML += `<div><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
+  }
 
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-
-  chatInput.value='';
+  input.value = '';
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// 🔹 Écouter les réponses admin en temps réel
-database.ref('adminResponses').on('child_added', snapshot => {
-  const item = snapshot.val();
-  if(item && item.userId){
-    chatMessages.innerHTML += `<div class='chat-msg'><strong>Admin :</strong> ${item.text}</div>`;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-});
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+document.getElementById('chat-input').addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
 </script>
+
 </body>
 </html>

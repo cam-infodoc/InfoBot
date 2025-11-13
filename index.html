@@ -10,7 +10,7 @@
     margin: 0;
     height: 100vh;
     overflow: hidden;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Montserrat', sans-serif;
   }
   #chatbot {
     position: fixed;
@@ -23,7 +23,7 @@
     height: 70px;
     background: rgba(30,30,30,0.7);
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(0, 150, 255, 0.3);
+    border: none;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -35,7 +35,6 @@
     transition: all 0.3s ease;
   }
   #chat-bubble:hover {
-    border-color: rgba(0, 150, 255, 0.7);
     box-shadow: 0 0 20px rgba(0,150,255,0.6);
   }
   #chat-window {
@@ -101,7 +100,7 @@
 <div id="chatbot">
   <div id="chat-bubble">💬</div>
   <div id="chat-window">
-    <div id="chat-header">Assistant InfoDoc</div>
+    <div id="chat-header">Info-Bot</div>
     <div id="chat-messages"></div>
     <div id="chat-input-area">
       <input id="chat-input" type="text" placeholder="Écrivez votre message...">
@@ -187,3 +186,4 @@ function sendMessage() {
 </script>
 </body>
 </html>
+

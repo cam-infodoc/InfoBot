@@ -2,47 +2,158 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Chatbot Simple</title>
+<title>Chatbot Glass</title>
 <style>
-  #chatbot { position: fixed; bottom: 20px; right: 20px; width: 300px; font-family: Arial,sans-serif; }
-  #chat-header { background: #007bff; color: white; padding: 10px; cursor: pointer; }
-  #chat-body { display: none; border: 1px solid #007bff; padding: 10px; background: #fff; }
-  #chat-messages { height: 200px; overflow-y: auto; margin-bottom: 10px; }
-  #chat-input { width: 70%; padding: 5px; }
-  #send-btn { padding: 5px 10px; }
+  :root {
+    --glass-bg: rgba(0, 0, 0, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent: #00bfff;
+    --text-light: #e6f1ff;
+  }
+
+  body {
+    margin: 0;
+    background: #000;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* 🔵 Bulle flottante */
+  #chat-bubble {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 65px;
+    height: 65px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0,191,255,0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 28px;
+  }
+
+  #chat-bubble:hover {
+    box-shadow: 0 0 30px var(--accent);
+    background: rgba(0, 191, 255, 0.15);
+  }
+
+  /* 🪟 Fenêtre de chat */
+  #chat-window {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 320px;
+    height: 420px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0, 191, 255, 0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text-light);
+  }
+
+  #chat-header {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--glass-border);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  #chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
+  #chat-input-area {
+    display: flex;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  #chat-input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-light);
+  }
+
+  #send-btn {
+    padding: 10px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  #send-btn:hover {
+    background: #008ecc;
+  }
+
+  .msg {
+    margin-bottom: 8px;
+  }
+  .msg strong {
+    color: var(--accent);
+  }
+
+  /* Scrollbar discrète */
+  #chat-messages::-webkit-scrollbar {
+    width: 6px;
+  }
+  #chat-messages::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
+  }
 </style>
 </head>
 <body>
 
-<div id="chatbot">
-  <div id="chat-header">Chat FAQ</div>
-  <div id="chat-body">
-    <div id="chat-messages"></div>
+<div id="chat-bubble">💬</div>
+
+<div id="chat-window">
+  <div id="chat-header">Assistant InfoDoc</div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-area">
     <input type="text" id="chat-input" placeholder="Posez votre question...">
-    <button id="send-btn">Envoyer</button>
+    <button id="send-btn">→</button>
   </div>
 </div>
 
 <script>
-// Basculer l'affichage du chat
-const chatHeader = document.getElementById('chat-header');
-const chatBody = document.getElementById('chat-body');
-chatHeader.addEventListener('click', () => {
-  chatBody.style.display = chatBody.style.display === 'none' ? 'block' : 'none';
+// 🔹 Basculer la fenêtre
+const chatBubble = document.getElementById('chat-bubble');
+const chatWindow = document.getElementById('chat-window');
+
+chatBubble.addEventListener('click', () => {
+  chatWindow.style.display = chatWindow.style.display === 'none' || chatWindow.style.display === '' ? 'flex' : 'none';
 });
 
-// Quelques FAQ simples
+// 🔹 FAQ simple
 const faqs = [
   { keywords: ["délai", "intervention"], response: "Les délais sont de 24h maximum." },
-  { keywords: ["paiement", "virement", "paypal"], response: "Nous acceptons PayPal et virement." }
+  { keywords: ["paiement", "paypal", "virement"], response: "Nous acceptons PayPal et les virements bancaires." }
 ];
 
-// Normalisation simple
 function normalizeText(text) {
-  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.,!?']/g,'').trim();
+  return text.toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[.,!?']/g, '')
+    .trim();
 }
 
-// Vérifier si un message correspond aux mots-clés
 function matchesKeywords(msg, keywords) {
   const userMsg = normalizeText(msg);
   return keywords.some(kw => {
@@ -51,26 +162,25 @@ function matchesKeywords(msg, keywords) {
   });
 }
 
-// Envoyer un message
 function sendMessage() {
-  const chatMessages = document.getElementById('chat-messages');
   const input = document.getElementById('chat-input');
+  const chatMessages = document.getElementById('chat-messages');
   const msg = input.value.trim();
   if(!msg) return;
 
-  chatMessages.innerHTML += `<div><strong>Vous :</strong> ${msg}</div>`;
+  chatMessages.innerHTML += `<div class="msg"><strong>Vous :</strong> ${msg}</div>`;
 
   let found = false;
   for(const faq of faqs){
     if(matchesKeywords(msg, faq.keywords)){
-      chatMessages.innerHTML += `<div><strong>Bot :</strong> ${faq.response}</div>`;
+      chatMessages.innerHTML += `<div class="msg"><strong>Bot :</strong> ${faq.response}</div>`;
       found = true;
       break;
     }
   }
 
   if(!found){
-    chatMessages.innerHTML += `<div><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
+    chatMessages.innerHTML += `<div class="msg"><strong>Bot :</strong> Votre question a été transmise à un administrateur.</div>`;
   }
 
   input.value = '';

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Admin Chat Panel</title>
+<style>
+  body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
+  textarea, input { width: 100%; margin-bottom: 10px; padding: 8px; font-size: 14px; }
+  button { padding: 8px 12px; font-size: 14px; cursor: pointer; }
+  .msg { border-bottom: 1px solid #444; padding: 8px; cursor: pointer; }
+  .msg:hover { background: rgba(0,150,255,0.1); }
+</style>
+</head>
+<body>
+<h2>Admin Chat Panel</h2>
+<div id="messages"></div>
+<h3>Répondre</h3>
+<input id="userId" placeholder="UserId de l'utilisateur">
+<textarea id="responseText" rows="3" placeholder="Votre réponse..."></textarea>
+<button id="sendBtn">Envoyer</button>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBX57S6LD4OpIF3cV5seuFOS730zDQUFnM",
+  authDomain: "info-bot-b92ae.firebaseapp.com",
+  databaseURL: "https://info-bot-b92ae-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "info-bot-b92ae",
+  storageBucket: "info-bot-b92ae.firebasestorage.app",
+  messagingSenderId: "721853060361",
+  appId: "1:721853060361:web:996e7fa3d12ddcba10efd8"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const messagesDiv = document.getElementById('messages');
+const userIdInput = document.getElementById('userId');
+const responseText = document.getElementById('responseText');
+const sendBtn = document.getElementById('sendBtn');
+
+// 🔹 Affichage messages
+db.ref('messages').on('child_added', snapshot => {
+  const msg = snapshot.val();
+  const id = snapshot.key;
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = `<strong>${msg.userId}</strong>: ${msg.text} (status: ${msg.status})`;
+  div.addEventListener('click', () => {
+    // remplit automatiquement le UserId pour répondre
+    userIdInput.value = msg.userId;
+  });
+  messagesDiv.prepend(div); // les plus récents en haut
+});
+
+// 🔹 Envoyer réponse
+sendBtn.addEventListener('click', () => {
+  const uid = userIdInput.value.trim();
+  const text = responseText.value.trim();
+  if(!uid || !text) return alert("UserId et réponse requis");
+
+  db.ref('adminResponses').push({
+    userId: uid,
+    text: text,
+    timestamp: Date.now()
+  });
+
+  responseText.value = '';
+  alert('Réponse envoyée !');
+});
+</script>
+</body>
+</html>

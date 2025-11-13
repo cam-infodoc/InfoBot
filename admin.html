@@ -2,22 +2,92 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Admin Chat Panel Avancé</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Chat Cute</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
-  h2,h3 { margin-top: 0; }
-  textarea, input { width: 100%; margin-bottom: 10px; padding: 8px; font-size: 14px; }
-  button { padding: 8px 12px; font-size: 14px; cursor: pointer; }
-  .msg { border-bottom: 1px solid #444; padding: 8px; cursor: pointer; }
-  .msg:hover { background: rgba(0,150,255,0.1); }
-  .pending { color: #00aaff; }
-  .answered { color: #0f0; }
+  body {
+    background: #fdf6f0; /* pastel blanc */
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+  }
+
+  h2, h3 {
+    margin: 0 0 10px 0;
+  }
+
+  #messages {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+
+  .msg {
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    word-wrap: break-word;
+  }
+
+  .msg.pending {
+    background: #fcbad3; /* rose pastel */
+    color: #6a3a4c;
+  }
+
+  .msg.answered {
+    background: #c2f0c2; /* vert pastel */
+    color: #2d662d;
+  }
+
+  .msg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .msg strong {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  button {
+    padding: 10px 15px;
+    background: #a3c4f3;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #fff;
+    transition: background 0.3s ease;
+  }
+
+  button:hover {
+    background: #79aefc;
+  }
 </style>
 </head>
 <body>
-<h2>Admin Chat Panel Avancé</h2>
+
+<h2>Admin Chat Panel</h2>
 <div id="messages"></div>
-<h3>Répondre</h3>
+
+<h3>Répondre à un utilisateur</h3>
 <input id="userId" placeholder="UserId de l'utilisateur">
 <textarea id="responseText" rows="3" placeholder="Votre réponse..."></textarea>
 <button id="sendBtn">Envoyer</button>
@@ -42,24 +112,21 @@ const userIdInput = document.getElementById('userId');
 const responseText = document.getElementById('responseText');
 const sendBtn = document.getElementById('sendBtn');
 
-// 🔹 Fonction pour afficher les messages
+// 🔹 Affiche messages utilisateurs
 function displayMessage(msg, key) {
   const div = document.createElement('div');
   div.className = 'msg ' + msg.status;
-  div.innerHTML = `<strong>${msg.userId}</strong>: ${msg.text} (status: ${msg.status})`;
+  div.innerHTML = `<strong>${msg.userId}</strong>: ${msg.text}`;
   div.addEventListener('click', () => {
     userIdInput.value = msg.userId;
   });
   messagesDiv.prepend(div);
 }
 
-// 🔹 Écoute messages utilisateurs (pending uniquement)
+// 🔹 Écoute messages "pending" en temps réel
 db.ref('messages').on('child_added', snapshot => {
   const msg = snapshot.val();
-  const key = snapshot.key;
-  if(msg.status === 'pending') {
-    displayMessage(msg, key);
-  }
+  if(msg.status === 'pending') displayMessage(msg, snapshot.key);
 });
 
 // 🔹 Envoyer réponse et changer statut
@@ -75,7 +142,7 @@ sendBtn.addEventListener('click', () => {
     timestamp: Date.now()
   });
 
-  // Mettre à jour le ou les messages correspondants en "answered"
+  // Mettre à jour les messages correspondants en "answered"
   db.ref('messages').orderByChild('userId').equalTo(uid).once('value').then(snapshot => {
     snapshot.forEach(child => {
       child.ref.update({status: 'answered'});
@@ -86,5 +153,6 @@ sendBtn.addEventListener('click', () => {
   alert('Réponse envoyée !');
 });
 </script>
+
 </body>
 </html>

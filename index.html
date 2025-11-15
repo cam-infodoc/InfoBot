@@ -67,8 +67,24 @@
   }
   .msg strong {
     display: block;
+    font-weight: bold;
+}
+
+/* Couleur du Bot */
+.bot-name {
     color: #00aaff;
-  }
+}
+
+/* Couleur de l’Admin */
+.admin-name {
+    color: #ff7ecb; /* Rose pastel */
+}
+
+/* Couleur de l'utilisateur */
+.user-name {
+    color: #7eff84;
+}
+
   #chat-input-area {
     display: flex;
     border-top: 1px solid rgba(0,150,255,0.4);
@@ -205,4 +221,5 @@ db.ref('adminResponses').on('child_added', snapshot => {
 
 </body>
 </html>
+
 

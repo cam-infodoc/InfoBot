@@ -161,7 +161,16 @@ bubble.addEventListener('click', () => {
 
 // 🔹 Fonctions
 function appendMsg(sender, text) {
-  messages.innerHTML += `<div class="msg"><strong>${sender} :</strong> ${text}</div>`;
+  let cls = "user-name";
+
+  if(sender === "Bot") cls = "bot-name";
+  if(sender === "Admin") cls = "admin-name";
+
+  messages.innerHTML += `
+    <div class="msg">
+      <strong class="${cls}">${sender} :</strong> ${text}
+    </div>`;
+  
   messages.scrollTop = messages.scrollHeight;
 }
 
@@ -221,5 +230,6 @@ db.ref('adminResponses').on('child_added', snapshot => {
 
 </body>
 </html>
+
 
 
